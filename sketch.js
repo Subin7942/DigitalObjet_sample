@@ -1,8 +1,15 @@
 let entity;
+let handS;
+let hendM;
+let hendH;
+let a;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  entity = new Entity(500, 10, 80);
+  entity = new Entity(width / 2, height / 2, 40);
+  handS = new Hand(0, 0, 1000);
+  handM = new Hand(0, 0, 300);
+  handH = new Hand(0, 0, 200);
 }
 
 function windowResized() {
@@ -13,18 +20,22 @@ function draw() {
   background(255);
   // circle(mouseX, mouseY, 100);
 
-  // 돌아가는 선
-  push();
-  let s = second();
-  let sL = windowWidth;
-  translate(windowWidth / 2, windowHeight / 2);
-  rotate(radians(s));
-  line(0, 0, sL, 0);
-  pop();
+  let M = createVector(mouseX, mouseY);
+  let D = dist(entity.pos, M);
 
   entity.show();
   entity.inside();
+  entity.setVel(0.1);
   entity.move();
+  entity.avoidMouse(D, 100);
+
+  // 선 그리기
+  let s = second();
+  let m = minute();
+  let h = hour();
+  handS.show(s);
+  handM.show(m);
+  handH.show(h, 12);
 }
 
 // 초침 - 개채가 움직이도록 하는 무언가
