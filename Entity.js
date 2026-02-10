@@ -2,7 +2,7 @@ class Entity {
   pos;
   vel;
   radius;
-  wallRestitution = 0.6;
+  restitution = 0.6;
 
   constructor(x, y, radius) {
     this.pos = createVector(x, y);
@@ -15,25 +15,25 @@ class Entity {
     circle(this.pos.x, this.pos.y, this.radius * 2);
   }
 
-  // 공이 벽에 부딫히면 속력이 반대로 작용
+  // 공이 벽에 부딫히면 속력이 반대로 작용하며 줄어듦
   inside() {
     if (this.pos.x + this.radius > width || this.pos.x - this.radius < 0) {
       this.pos.x = constrain(this.pos.x, this.radius, width - this.radius);
-      this.vel.x *= -this.wallRestitution;
+      this.vel.x *= -this.restitution;
     }
 
     if (this.pos.y + this.radius > height || this.pos.y - this.radius < 0) {
       this.pos.y = constrain(this.pos.y, this.radius, height - this.radius);
-      this.vel.y *= -this.wallRestitution;
+      this.vel.y *= -this.restitution;
     }
   }
 
-  // n만큼 속력 주기
+  // n만큼 속력의 크기를 조절
   setVel(n) {
     this.vel.add(n);
   }
 
-  // 속력 만큼 위치 값을 더해서 움직이게 만듦
+  // 속력 만큼 위치에 값을 더해서 움직이게 만듦
   move() {
     this.pos.add(this.vel);
   }
