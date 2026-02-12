@@ -34,9 +34,7 @@ class Hand {
   // }
   update(time, range = 60) {
     let angle = map(time, 0, range, 0, TWO_PI);
-
-    let dir = p5.Vector.fromAngle(angle - HALF_PI);
-    dir.mult(this.length);
+    let dir = p5.Vector.fromAngle(angle - HALF_PI, this.length);
 
     this.end = p5.Vector.add(this.start, dir);
     this.Ln = p5.Vector.sub(this.end, this.start);
@@ -44,9 +42,8 @@ class Hand {
   }
 
   show() {
-  line(this.start.x, this.start.y,
-      this.end.x, this.end.y);
-}
+    line(this.start.x, this.start.y, this.end.x, this.end.y);
+  }
 
   // 선의 법선(직각 방향) 구하기
   makeNormalUnit(lineVector) {
