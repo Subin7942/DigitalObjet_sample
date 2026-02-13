@@ -94,8 +94,8 @@ function draw() {
         randomHue = random(360);
       }
       // 위치 재조정 되고 튕겨나감
-      // entity.pos = col.rePosition(handS, preEnPos);
-      // entity.vel = col.reVelocity(handS);
+      entity.pos = col.rePosition(handS, preEnPos);
+      entity.vel = col.reVelocity(handS);
     } else {
       colorChangeNum = 0;
     }
