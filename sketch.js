@@ -1,25 +1,28 @@
+
 // 공의 형태를 한 움직이는 개체
 let entity;
 // 시침 분침 초침
 let handS;
 let handM;
 let handH;
-// 충돌 가능성 여부를 알리는 변수
-let preCollision = false;
-// 충돌 여부를 알리는 변수
-let collision = false;
+
 // 마우스 위치 벡터
 let M;
 let radiusM;
-// 충돌 판단 시스템
-let col;
+
 // 화면의 중심
 let centerX, centerY;
+
 // 배경 색상 관련 변수
 let randomHue, randomColor;
-let colorChangeNum = 0;
 
-let dir;
+// 튕김 쿨다운
+let lastBounceMs = -9999;
+let bounceCooldownMs = 70; // 50~120 추천
+
+// 속도 제한/최소 속도
+let maxSpeed = 12;
+let minSpeedAfterBounce = 1.2;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -32,14 +35,16 @@ function setup() {
   let randomY = random(height);
 
   entity = new Entity(randomX, randomY, 40);
+
+  // restitution은 1 이하 권장 (1 넘기면 충돌할수록 가속됨)
+  entity.restitution = 0.9;
+
   centerX = windowWidth / 2;
   centerY = windowHeight / 2;
 
   handS = new Hand(centerX, centerY, width * 3);
   handM = new Hand(centerX, centerY, width / 4);
   handH = new Hand(centerX, centerY, width / 6);
-
-  col = new CollisionSystem();
 }
 
 function windowResized() {
@@ -52,7 +57,7 @@ function windowResized() {
   handH = new Hand(centerX, centerY, width / 6);
 }
 
-function mouse() {
+function drawMouseRing() {
   M = createVector(mouseX, mouseY);
   radiusM = 50;
   noFill();
@@ -77,88 +82,114 @@ function timeIndex() {
   pop();
 }
 
+// 점 P에서 선분 AB까지의 가장 가까운 점 + 거리
+function closestPointOnSegment(P, A, B) {
+  let AB = p5.Vector.sub(B, A);
+  let AP = p5.Vector.sub(P, A);
+
+  let ab2 = AB.magSq();
+  if (ab2 === 0) {
+    return { point: A.copy(), t: 0, dist: p5.Vector.dist(P, A) };
+  }
+
+  let t = AP.dot(AB) / ab2;
+  t = constrain(t, 0, 1);
+
+  let closest = p5.Vector.add(A, p5.Vector.mult(AB, t));
+  let dist = p5.Vector.dist(P, closest);
+
+  return { point: closest, t, dist };
+}
+
+// 거울 반사: v' = v - 2*(v·n)*n
+function reflectVelocity(v, nUnit) {
+  let vel = v.copy();
+  let n = nUnit.copy();
+  if (n.magSq() === 0) n = createVector(1, 0);
+  n.normalize();
+
+  // 법선이 속도와 같은 방향이면 뒤집어서 "안쪽으로" 튕기지 않게
+  if (vel.dot(n) > 0) n.mult(-1);
+
+  let dot = vel.dot(n);
+  vel.sub(p5.Vector.mult(n, 2 * dot));
+  return vel;
+}
+
 function draw() {
   randomColor = color(randomHue, 70, 70);
   background(randomColor);
-  mouse();
+
+  drawMouseRing();
   timeIndex();
 
-  let preEnPos = entity.pos.copy();
-  let preEnVel = entity.vel.copy();
-
-  // let force = createVector(0.02, 0);
-  let force = createVector(0, 0);
+  // ————— 엔티티 업데이트 —————
   entity.inside();
-  entity.show();
-  entity.applyForce(force);
   entity.move();
+
+  // 마우스 인터랙션은 항상 적용
   entity.runAway(M, radiusM);
 
-  // 선 그리기 (show가 rotation 보다 먼저 와야 반응이 제대로 됨)
+  // 너무 빨라지지 않게 항상 제한
+  entity.vel.limit(maxSpeed);
+
+  // ---------- 바늘 업데이트 ----------
   let s = second();
   let m = minute();
   let h = hour();
-  handS.show();
+
   handS.rotation(s);
-  handM.show();
   handM.rotation(m);
-  handH.show();
   handH.rotation(h, 12);
 
+  // ---------- 그리기 ----------
+  handS.show();
+  handM.show();
+  handH.show();
+
   entity.color = 'white';
+  entity.show();
 
-  // 초침에 대한 충돌 판단
-  // 충돌 가능성이 있으며 충돌 되었다고 판단 되면 작동
-  preCollision = col.preColJudge(handS);
-  if (preCollision) {
-    collision = col.colJudge(handS);
+  // ===========================
+  // ✅ 초침 충돌 (안정 버전)
+  // ===========================
+  let A = handS.start.copy();
+  let B = handS.end.copy();
+  let P = entity.pos.copy();
 
-    // 충돌 한 이후 벌어지는 일
-    if (collision) {
-      // 개체 색 변경
-      entity.color = 'red';
-      // 배경 색 변경
-      colorChangeNum++;
-      if (colorChangeNum === 1) {
-        randomHue = random(360);
-      }
-      // 위치 재조정 되고 튕겨나감
-      // entity.pos = col.rePosition(handS, preEnPos);
-      // entity.vel = col.reVelocity(handS);
+  let hit = closestPointOnSegment(P, A, B);
+  let isCollide = hit.dist <= entity.radius;
 
-      // let reVel = col.reVelocity2(handS);
-      // entity.vel = reVel;
-      // preEnPos = entity.pos.copy();
-      // preEnVel = entity.vel.copy();
+  let now = millis();
+  if (isCollide && now - lastBounceMs > bounceCooldownMs) {
+    lastBounceMs = now;
 
-      // entity = new Entity(preEnPos.x, preEnPos.y, 40);
-      // entity.vel = preEnVel.copy();
-      // entity.vel.mult(0.02);
-    } else {
-      colorChangeNum = 0;
+    entity.color = 'red';
+    randomHue = random(360);
+
+    // 1) 충돌 법선(closest -> entity)
+    let n = p5.Vector.sub(entity.pos, hit.point);
+    if (n.magSq() === 0) n = handS.normalUnit.copy();
+    n.normalize();
+
+    // 2) 겹침 해소: 선 밖으로 확실히 밀기(+1px 여유)
+    let push = entity.radius - hit.dist + 1.0;
+    entity.pos.add(p5.Vector.mult(n, push));
+
+    // 3) 반사: "현재 속도"로 반사 (preEnVel 쓰면 0일 때 멈출 수 있음)
+    let reflected = reflectVelocity(entity.vel, n);
+
+    // 4) restitution (절대 1 초과 금지)
+    let r = min(entity.restitution, 1.0);
+    reflected.mult(r);
+
+    // 5) 멈춤 방지: 너무 느리면 최소 속도 부여
+    if (reflected.mag() < minSpeedAfterBounce) {
+      reflected.setMag(minSpeedAfterBounce);
     }
+
+    // 6) 최종 적용 + 상한
+    reflected.limit(maxSpeed);
+    entity.vel = reflected;
   }
 }
-
-// 부딫힘 실패 1 : 항상 오른쪽 아래 구석에 박힘, 박히고 나면 상호작용 불가
-// if (collision) {
-//       entity.color = 'red';
-
-//       let dirToEn = p5.Vector.sub(entity.pos, handS.normalUnit);
-
-//       dirToEn.setMag(0.001);
-//       entity.applyForce(dirToEn);
-//       // entity.vel.add(dirToEn);
-//     }
-
-// 부딫힘 실패 2 : 색만 바뀌고 튕겨나가질 않음
-//  if (collision) {
-//       entity.color = 'red';
-//       let distToEn = p5.Vector.dist(entity.pos, handS.normalUnit);
-//       let dirToEn = p5.Vector.sub(entity.pos, handS.normalUnit);
-//       if(distToEn < entity.radius * 2){
-//         dirToEn.setMag(0.001);
-//         entity.applyForce(dirToEn);
-//         // entity.vel.add(dirToEn);
-//       }
-//     }

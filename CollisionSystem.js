@@ -1,76 +1,95 @@
 class CollisionSystem {
   constructor() {}
 
-  // 개체와 선이 만날 가능성(충돌 가능성) 여부
+  // 점 P에서 선분 AB까지의 가장 가까운 점 + 거리 구하기
+  closestPointOnSegment(P, A, B) {
+    let AB = p5.Vector.sub(B, A);
+    let AP = p5.Vector.sub(P, A);
+
+    let ab2 = AB.magSq();
+    if (ab2 === 0) {
+      // A와 B가 같은 점이면
+      return { point: A.copy(), t: 0, dist: p5.Vector.dist(P, A) };
+    }
+
+    let t = AP.dot(AB) / ab2;
+    t = constrain(t, 0, 1);
+
+    let closest = p5.Vector.add(A, p5.Vector.mult(AB, t));
+    let dist = p5.Vector.dist(P, closest);
+
+    return { point: closest, t, dist };
+  }
+
+  // (넓게) 충돌 가능성 여부: 선분-원 거리로 판단 (빠르고 안정적)
   preColJudge(line) {
-    // 개체와 선의 시작점 방향
-    let dirEnCenterLnStart = p5.Vector.sub(entity.pos, line.start);
+    // 선분 시작/끝
+    let A = line.colStart ? line.colStart : line.start;
+    let B = line.end;
 
-    // 개체와 선의 시작점을 이은 방향를 선의 법선에 투영해서 개체와 선의 직선 거리(제일 가까운 거리) 알아냄
-    let dirEnCenterAndLn = abs(dirEnCenterLnStart.dot(line.normalUnit));
+    let hit = this.closestPointOnSegment(entity.pos, A, B);
 
-    // 개체와 선의 거리가 개체의 지름 보다 작으면 충돌 가능성 있음
-    if (dirEnCenterAndLn <= entity.radius * 2) {
-      return true;
-    } else {
-      return false;
-    }
+    // 여유값(닿기 직전에도 판정이 켜지게)
+    let margin = entity.radius * 0.5;
+    return hit.dist <= entity.radius + margin;
   }
 
-  // 개체와 선이 만났는지(충돌) 여부
+  // 실제 충돌 여부: 선분-원 최단거리 <= 반지름
   colJudge(line) {
-    // 선 벡터(초침) 제곱
-    let a = line.Ln.magSq();
+    let A = line.colStart ? line.colStart : line.start;
+    let B = line.end;
 
-    // 개체에서 선으로 향하는 방향
-    let dirLnStartEnCenter = p5.Vector.sub(line.start, entity.pos);
+    let hit = this.closestPointOnSegment(entity.pos, A, B);
+    return hit.dist <= entity.radius;
+  }
 
-    // 선 벡터와 방향을 x y 끼리 곱해준 값 (선 벡터와 개체 중심의 위치 관계)
-    let b = line.Ln.x * dirLnStartEnCenter.x + line.Ln.y * dirLnStartEnCenter.y;
+  // 개체가 선에 닿았을 때 위치 재조정 (겹침 해소)
+  rePosition(line) {
+    let A = line.colStart ? line.colStart : line.start;
+    let B = line.end;
 
-    // 이 위치 관계를 제곱하고 개체의 반지름을 제곱한 값을 빼줌
-    let c = dirLnStartEnCenter.magSq() - entity.radius * entity.radius;
+    let hit = this.closestPointOnSegment(entity.pos, A, B);
 
-    // 이차방정식 계산을 통해 선과 개체가 닿은 정도 알아내기 (개체가 원의 형태를 하고 있어 선이 닿는 지점이 2개 이니, 이차방정식 사용)
-    let t1 = (-b + sqrt(b * b - a * c)) / a;
-    let t2 = (-b - sqrt(b * b - a * c)) / a;
+    // 밀어낼 방향 = closest -> entity
+    let pushDir = p5.Vector.sub(entity.pos, hit.point);
 
-    if ((t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1)) {
-      return true;
+    // 완전히 겹쳐서 방향이 0이면 법선 사용
+    if (pushDir.magSq() === 0) {
+      pushDir = line.normalUnit.copy();
     } else {
-      return false;
-    }
-  }
-
-  // 개체가 선에 닿았을 때 위치 재조정
-  rePosition(line, preEntityPos) {
-    let dir = p5.Vector.sub(entity.pos, preEntityPos);
-    let a = dir.dot(line.normalUnit);
-    let fromLnStToPrePos = p5.Vector.sub(preEntityPos, line.start);
-    let b = entity.radius - fromLnStToPrePos.dot(line.normalUnit);
-    let t = b / a;
-    if (t < 0 || t > 1) {
-      b = -1 * entity.radius - fromLnStToPrePos.dot(line.normalUnit);
-      t = b / a;
+      pushDir.normalize();
     }
 
-    dir.mult(b / a);
-    let rePos = p5.Vector.add(preEntityPos, dir);
-    return rePos;
+    // 겹친 만큼 + 살짝(0.8px) 더 밀어서 다음 프레임에도 붙어있는 현상 방지
+    let pushAmount = entity.radius - hit.dist + 0.8;
+    pushDir.mult(pushAmount);
+
+    return p5.Vector.add(entity.pos, pushDir);
   }
 
-  // 개체가 튕겨나오는 속도 벡터 계산
-  reVelocity(line) {
-    let n = -1 + entity.vel.dot(line.normalUnit);
-    let reVel = p5.Vector.mult(line.normalUnit, n);
-    reVel.mult(2);
-    reVel.add(entity.vel);
-    return reVel;
-  }
+  // 반사 속도 계산(항상 반사) — 방향은 충돌 법선 기반
+  reVelocity(line, inputVel) {
+    let vel = inputVel ? inputVel.copy() : entity.vel.copy();
 
-  reVelocity2(line) {
-    let dir = p5.Vector.sub(entity.pos, line.normalUnit);
-    dir.setMag(0.5);
-    return dir;
+    let A = line.colStart ? line.colStart : line.start;
+    let B = line.end;
+
+    let hit = this.closestPointOnSegment(entity.pos, A, B);
+
+    // 충돌 법선(closest -> entity)
+    let n = p5.Vector.sub(entity.pos, hit.point);
+
+    if (n.magSq() === 0) {
+      n = line.normalUnit.copy();
+    } else {
+      n.normalize();
+    }
+
+    // vel' = vel - 2*(vel·n)*n
+    let dot = vel.dot(n);
+    let reflect = p5.Vector.mult(n, 2 * dot);
+    vel.sub(reflect);
+
+    return vel;
   }
 }
