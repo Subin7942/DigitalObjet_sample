@@ -10,7 +10,7 @@ let preCollision = false;
 let collision = false;
 // 마우스 위치 벡터
 let M;
-let rangeM;
+let radiusM;
 // 충돌 판단 시스템
 let col;
 // 화면의 중심
@@ -34,9 +34,9 @@ function setup() {
   entity = new Entity(randomX, randomY, 40);
   centerX = windowWidth / 2;
   centerY = windowHeight / 2;
-  handS = new Hand(centerX, centerY, 1000);
-  handM = new Hand(centerX, centerY, 300);
-  handH = new Hand(centerX, centerY, 200);
+  handS = new Hand(centerX, centerY, width * 3);
+  handM = new Hand(centerX, centerY, width / 3);
+  handH = new Hand(centerX, centerY, width / 5);
 
   col = new CollisionSystem();
 }
@@ -45,16 +45,16 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   centerX = windowWidth / 2;
   centerY = windowHeight / 2;
-  handS = new Hand(centerX, centerY, 1000);
-  handM = new Hand(centerX, centerY, 300);
-  handH = new Hand(centerX, centerY, 200);
+handS = new Hand(centerX, centerY, width * 3);
+  handM = new Hand(centerX, centerY, width / 3);
+  handH = new Hand(centerX, centerY, width / 5);
 }
 
 function mouse() {
   M = createVector(mouseX, mouseY);
-  rangeM = 100;
+  radiusM = 50;
   noFill();
-  circle(mouseX, mouseY, rangeM);
+  circle(mouseX, mouseY, radiusM * 2);
 }
 
 function draw() {
@@ -71,7 +71,7 @@ function draw() {
   entity.show();
   entity.applyForce(force);
   entity.move();
-  entity.runAway(M, rangeM);
+  entity.runAway(M, radiusM);
 
   // 선 그리기 (show가 rotation 보다 먼저 와야 반응이 제대로 됨)
   let s = second();
