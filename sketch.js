@@ -5,9 +5,9 @@ let handS;
 let handM;
 let handH;
 // 충돌 가능성 여부를 알리는 변수
-let preCollision;
+let preCollision = false;
 // 충돌 여부를 알리는 변수
-let collision;
+let collision = false;
 // 마우스 위치 벡터
 let M;
 let rangeM;
@@ -18,6 +18,8 @@ let centerX, centerY;
 // 배경 색상 관련 변수
 let randomHue, randomColor;
 let colorChangeNum = 0;
+
+let dir;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -41,6 +43,11 @@ function setup() {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  centerX = windowWidth / 2;
+  centerY = windowHeight / 2;
+  handS = new Hand(centerX, centerY, 1000);
+  handM = new Hand(centerX, centerY, 300);
+  handH = new Hand(centerX, centerY, 200);
 }
 
 function mouse() {
@@ -53,8 +60,10 @@ function mouse() {
 function draw() {
   randomColor = color(randomHue, 70, 70);
   background(randomColor);
-
   mouse();
+
+  let preEnPos = entity.pos.copy();
+  let preEnVel = entity.vel.copy();
 
   // let force = createVector(0.02, 0);
   let force = createVector(0, 0);
@@ -76,7 +85,6 @@ function draw() {
   handH.rotation(h, 12);
 
   entity.color = 'white';
-  let preEnPos = entity.pos.copy();
 
   // 초침에 대한 충돌 판단
   // 충돌 가능성이 있으며 충돌 되었다고 판단 되면 작동
@@ -96,6 +104,15 @@ function draw() {
       // 위치 재조정 되고 튕겨나감
       entity.pos = col.rePosition(handS, preEnPos);
       entity.vel = col.reVelocity(handS);
+
+      // let reVel = col.reVelocity2(handS);
+      // entity.vel = reVel;
+      // preEnPos = entity.pos.copy();
+      // preEnVel = entity.vel.copy();
+
+      // entity = new Entity(preEnPos.x, preEnPos.y, 40);
+      // entity.vel = preEnVel.copy();
+      // entity.vel.mult(0.02);
     } else {
       colorChangeNum = 0;
     }

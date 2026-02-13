@@ -67,4 +67,10 @@ class CollisionSystem {
     reVel.add(entity.vel);
     return reVel;
   }
+
+  reVelocity2(line) {
+    let dir = p5.Vector.sub(entity.pos, line.normalUnit);
+    dir.setMag(0.5);
+    return dir;
+  }
 }
