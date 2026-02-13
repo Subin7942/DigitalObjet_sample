@@ -55,7 +55,7 @@ class CollisionSystem {
     }
 
     dir.mult(b / a);
-    rePos = p5.Vector.add(preEntityPos, dir);
+    let rePos = p5.Vector.add(preEntityPos, dir);
     return rePos;
   }
 
