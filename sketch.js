@@ -13,13 +13,21 @@ let M;
 let rangeM;
 // 충돌 판단 시스템
 let col;
-// 중심
+// 화면의 중심
 let centerX, centerY;
+// 배경 색상 관련 변수
+let randomHue, randomColor;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
+
+  colorMode(HSB, 360, 100, 100);
+  stroke('white');
+  randomHue = random(360);
+
   let randomX = random(width);
   let randomY = random(height);
+
   entity = new Entity(randomX, randomY, 40);
   centerX = windowWidth / 2;
   centerY = windowHeight / 2;
@@ -37,13 +45,14 @@ function windowResized() {
 function mouse() {
   M = createVector(mouseX, mouseY);
   rangeM = 100;
+  noFill();
   circle(mouseX, mouseY, rangeM);
 }
 
 function draw() {
+  randomColor = color(randomHue, 70, 70);
+  background(randomColor);
 
-  background(255);
-  // translate(windowWidth / 2, windowHeight / 2);
   mouse();
 
   // let force = createVector(0.02, 0);
@@ -54,31 +63,39 @@ function draw() {
   entity.move();
   entity.runAway(M, rangeM);
 
-  // 선 그리기 (show가 update 보다 먼저 와야 반응이 제대로 됨)
+  // 선 그리기 (show가 rotation 보다 먼저 와야 반응이 제대로 됨)
   let s = second();
   let m = minute();
   let h = hour();
-  handS.update(s);
   handS.show();
+  handS.rotation(s);
   handM.show();
-  handM.update(m);
+  handM.rotation(m);
   handH.show();
-  handH.update(h, 12);
+  handH.rotation(h, 12);
 
   entity.color = 'white';
+  let preEnPos = entity.pos.copy();
 
   // 초침에 대한 충돌 판단
+  // 충돌 가능성이 있으며 충돌 되었다고 판단 되면 작동
   preCollision = col.preColJudge(handS);
   if (preCollision) {
     collision = col.colJudge(handS);
 
+    // 충돌 한 이후 벌어지는 일
     if (collision) {
+      // 개체 색 변경
       entity.color = 'red';
-      let dirToEn = p5.Vector.sub(entity.pos, handS.normalUnit);
-
-      dirToEn.setMag(0.001);
-      // entity.applyForce(dirToEn);
-      entity.vel.add(dirToEn);
+      // 배경 색 변경
+      if (frameCount % 60 == 0) {
+        for (let n = 0; n < 2; n++) {
+          randomHue = random(360);
+        }
+      }
+      // 위치 재조정 되고 튕겨나감
+      entity.pos = col.rePosition(handS, preEnPos);
+      entity.vel = col.reVelocity(handS);
     }
   }
 }

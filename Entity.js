@@ -48,7 +48,7 @@ class Entity {
     this.pos.add(this.vel);
   }
 
-  // 마우스에 닿지 않게 해서 밀기
+  // 닿으면 밀림
 runAway(posVector, range) {
     let d = p5.Vector.dist(this.pos, posVector);
     let dir = p5.Vector.sub(this.pos, posVector);

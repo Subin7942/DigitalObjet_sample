@@ -11,7 +11,7 @@ class Hand {
   // 법선(선의 수직 방향을 보여주는 선) 방향을 가진 벡터
   normalUnit;
 
-  v;
+  handDir;
 
   constructor(startX, startY, length) {
     this.length = length;
@@ -22,20 +22,13 @@ class Hand {
 
     this.normalUnit = this.makeNormalUnit(this.Ln);
   }
-
-  // 선을 생성하고 시작점을 중심으로 회전
-  // show(time, range = 60) {
-  //   push();
-  //   translate(windowWidth / 2, windowHeight / 2);
-  //   let angle = map(time, 0, range, 0, 360);
-  //   rotate(radians(angle - 90));
-  //   line(this.start.x, this.start.y, this.end.x, this.end.y);
-  //   pop();
-  // }
-  update(time, range = 60) {
+  
+// 선 벡터를 회전시키기
+  rotation(time, range = 60) {
     let angle = map(time, 0, range, 0, TWO_PI);
     let dir = p5.Vector.fromAngle(angle - HALF_PI, this.length);
-
+    // let preDir = dir.copy();
+    
     this.end = p5.Vector.add(this.start, dir);
     this.Ln = p5.Vector.sub(this.end, this.start);
     this.normalUnit = this.makeNormalUnit(this.Ln);

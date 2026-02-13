@@ -41,4 +41,30 @@ class CollisionSystem {
       return false;
     }
   }
+
+  // 개체가 선에 닿았을 때 위치 재조정
+  rePosition(line, preEntityPos) {
+    let dir = p5.Vector.sub(entity.pos, preEntityPos);
+    let a = dir.dot(line.normalUnit);
+    let fromLnStToPrePos = p5.Vector.sub(preEntityPos, line.start);
+    let b = entity.radius - fromLnStToPrePos.dot(line.normalUnit);
+    let t = b / a;
+    if (t < 0 || t > 1) {
+      b = -1 * entity.radius - fromLnStToPrePos.dot(line.normalUnit);
+      t = b / a;
+    }
+
+    dir.mult(b / a);
+    rePos = p5.Vector.add(preEntityPos, dir);
+    return rePos;
+  }
+
+  // 개체가 튕겨나오는 속도 벡터 계산
+  reVelocity(line) {
+    let n = -1 + entity.vel.dot(line.normalUnit);
+    let reVel = p5.Vector.mult(line.normalUnit, n);
+    reVel.mult(2);
+    reVel.add(entity.vel);
+    return reVel;
+  }
 }
