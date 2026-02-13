@@ -49,12 +49,12 @@ class Entity {
   }
 
   // 닿으면 밀림
-runAway(posVector, range) {
+  runAway(posVector, range) {
     let d = p5.Vector.dist(this.pos, posVector);
     let dir = p5.Vector.sub(this.pos, posVector);
     if (d <= range) {
       d = constrain(d, 0, range);
-      dir.setMag(0.5);
+      dir.setMag(0.1);
       // this.applyForce(dir);
       this.vel.add(dir);
     }
