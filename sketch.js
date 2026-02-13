@@ -34,9 +34,10 @@ function setup() {
   entity = new Entity(randomX, randomY, 40);
   centerX = windowWidth / 2;
   centerY = windowHeight / 2;
+
   handS = new Hand(centerX, centerY, width * 3);
-  handM = new Hand(centerX, centerY, width / 3);
-  handH = new Hand(centerX, centerY, width / 5);
+  handM = new Hand(centerX, centerY, width / 4);
+  handH = new Hand(centerX, centerY, width / 6);
 
   col = new CollisionSystem();
 }
@@ -45,9 +46,10 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   centerX = windowWidth / 2;
   centerY = windowHeight / 2;
-handS = new Hand(centerX, centerY, width * 3);
-  handM = new Hand(centerX, centerY, width / 3);
-  handH = new Hand(centerX, centerY, width / 5);
+
+  handS = new Hand(centerX, centerY, width * 3);
+  handM = new Hand(centerX, centerY, width / 4);
+  handH = new Hand(centerX, centerY, width / 6);
 }
 
 function mouse() {
@@ -57,10 +59,29 @@ function mouse() {
   circle(mouseX, mouseY, radiusM * 2);
 }
 
+function timeIndex() {
+  push();
+  translate(width / 2, height / 2);
+  for (let n = 0; n < 12; n++) {
+    push();
+    rotate(radians(n * 30));
+    line(170, 0, 200, 0);
+    pop();
+  }
+  for (let n = 0; n < 60; n++) {
+    push();
+    rotate(radians(n * 6));
+    line(170, 0, 180, 0);
+    pop();
+  }
+  pop();
+}
+
 function draw() {
   randomColor = color(randomHue, 70, 70);
   background(randomColor);
   mouse();
+  timeIndex();
 
   let preEnPos = entity.pos.copy();
   let preEnVel = entity.vel.copy();
