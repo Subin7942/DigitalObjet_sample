@@ -17,6 +17,7 @@ let col;
 let centerX, centerY;
 // 배경 색상 관련 변수
 let randomHue, randomColor;
+let colorChangeNum = 0;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -88,14 +89,15 @@ function draw() {
       // 개체 색 변경
       entity.color = 'red';
       // 배경 색 변경
-      if (frameCount % 60 == 0) {
-        for (let n = 0; n < 2; n++) {
-          randomHue = random(360);
-        }
+      colorChangeNum++;
+      if (colorChangeNum === 1) {
+        randomHue = random(360);
       }
       // 위치 재조정 되고 튕겨나감
-      entity.pos = col.rePosition(handS, preEnPos);
-      entity.vel = col.reVelocity(handS);
+      // entity.pos = col.rePosition(handS, preEnPos);
+      // entity.vel = col.reVelocity(handS);
+    } else {
+      colorChangeNum = 0;
     }
   }
 }
