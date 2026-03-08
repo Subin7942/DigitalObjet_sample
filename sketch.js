@@ -119,6 +119,12 @@ function draw() {
   randomColor = color(randomHue, 70, 70);
   background(randomColor);
 
+  // 시간 숫자로 표시
+  textFont('Escoredream');
+  textSize(15);
+  textAlign(CENTER, CENTER);
+  text(hour() + ' : ' + minute() + ' : ' + second(), centerX, centerY);
+
   drawMouseRing();
   timeIndex();
 
