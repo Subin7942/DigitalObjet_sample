@@ -1,4 +1,3 @@
-
 // 공의 형태를 한 움직이는 개체
 let entity;
 // 시침 분침 초침
@@ -153,7 +152,7 @@ function draw() {
   // ===========================
   // ✅ 초침 충돌 (안정 버전)
   // ===========================
-  let A = handS.start.copy();
+  let A = handS.colStart.copy();
   let B = handS.end.copy();
   let P = entity.pos.copy();
 

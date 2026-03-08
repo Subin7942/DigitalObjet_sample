@@ -1,4 +1,3 @@
-
 class Hand {
   // 선의 길이
   length;
