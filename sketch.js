@@ -123,7 +123,11 @@ function draw() {
   textFont('Escoredream');
   textSize(15);
   textAlign(CENTER, CENTER);
-  text(hour() + ' : ' + minute() + ' : ' + second(), centerX, centerY);
+  text(
+    hour() - 12 + '   :   ' + minute() + '   :   ' + second(),
+    centerX,
+    centerY,
+  );
 
   drawMouseRing();
   timeIndex();
